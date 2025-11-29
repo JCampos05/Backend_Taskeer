@@ -10,9 +10,9 @@ const primaryConfig = {
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
-    ssl: {
+    ssl: process.env.DB_HOST ? {
         rejectUnauthorized: false
-    }
+    } : undefined
 };
 
 // Configuración de respaldo (localhost - desarrollo)
@@ -21,14 +21,15 @@ const fallbackConfig = {
     port: 3306,
     user: 'root',
     password: '123456789', // Ajusta según tu configuración local
-    database: 'tasker', // Ajusta el nombre de tu BD local
+    database: 'taskeer', // Ajusta el nombre de tu BD local
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
 };
 
-let pool;
+let pool = null;
 let isUsingFallback = false;
+let isInitialized = false;
 
 // Función para crear pool con una configuración específica
 const createPool = (config) => {
@@ -40,57 +41,105 @@ const tryConnection = async (config, configName) => {
     try {
         const testPool = createPool(config);
         const connection = await testPool.getConnection();
-        console.log(`Conexión exitosa usando ${configName}`);
+        console.log(`✅ Conexión exitosa usando ${configName}`);
         connection.release();
         return testPool;
     } catch (error) {
-        console.error(`Falló conexión con ${configName}:`, error.message);
+        console.error(`❌ Falló conexión con ${configName}:`, error.message);
         return null;
     }
 };
 
-// Inicializar conexión con fallback
+// Inicializar conexión con fallback de forma síncrona al inicio
 const initializeConnection = async () => {
+    if (isInitialized) return pool;
+    
     try {
         // Primero intentar con configuración primaria (Aiven)
-        console.log('Intentando conectar con Aiven...');
-        pool = await tryConnection(primaryConfig, 'Aiven (Producción)');
+        if (process.env.DB_HOST) {
+            console.log('🔄 Intentando conectar con Aiven...');
+            pool = await tryConnection(primaryConfig, 'Aiven (Producción)');
+        }
         
         // Si falla, intentar con localhost
         if (!pool) {
-            console.log('Intentando conectar con localhost...');
+            console.log('🔄 Intentando conectar con localhost...');
             pool = await tryConnection(fallbackConfig, 'Localhost (Desarrollo)');
             isUsingFallback = true;
         }
         
         // Si ambas fallan, salir
         if (!pool) {
-            console.error('No se pudo conectar a ninguna base de datos');
+            console.error('❌ No se pudo conectar a ninguna base de datos');
             process.exit(1);
         }
         
         if (isUsingFallback) {
-            console.log('ADVERTENCIA: Usando base de datos local de respaldo');
+            console.log('⚠️  ADVERTENCIA: Usando base de datos local de respaldo');
         }
         
+        isInitialized = true;
+        return pool;
+        
     } catch (error) {
-        console.error('Error crítico al inicializar conexión:', error.message);
+        console.error('❌ Error crítico al inicializar conexión:', error.message);
         process.exit(1);
     }
 };
 
-// Ejecutar inicialización
-initializeConnection();
+// Inicializar inmediatamente al cargar el módulo
+const poolPromise = initializeConnection();
 
-// Exportar el pool (se asignará después de la inicialización)
+// Exportar el pool con un getter que espera la inicialización
 module.exports = new Proxy({}, {
     get(target, prop) {
-        if (!pool) {
-            throw new Error('Pool de conexiones aún no inicializado');
+        if (prop === 'getConnection') {
+            return async (...args) => {
+                if (!isInitialized) {
+                    await poolPromise;
+                }
+                return pool.getConnection(...args);
+            };
         }
+        
+        if (prop === 'query') {
+            return async (...args) => {
+                if (!isInitialized) {
+                    await poolPromise;
+                }
+                return pool.query(...args);
+            };
+        }
+        
+        if (prop === 'execute') {
+            return async (...args) => {
+                if (!isInitialized) {
+                    await poolPromise;
+                }
+                return pool.execute(...args);
+            };
+        }
+        
+        if (prop === 'end') {
+            return async (...args) => {
+                if (!isInitialized) {
+                    await poolPromise;
+                }
+                return pool.end(...args);
+            };
+        }
+        
+        if (prop === 'isUsingFallback') {
+            return () => isUsingFallback;
+        }
+        
+        // Para cualquier otra propiedad, esperar inicialización
+        if (!isInitialized) {
+            throw new Error('Pool de conexiones aún no inicializado. Usa await en métodos asíncronos.');
+        }
+        
         return pool[prop];
     }
 });
 
-// Exportar función para verificar si está usando fallback
-module.exports.isUsingFallback = () => isUsingFallback;
+module.exports.waitForInitialization = () => poolPromise;
