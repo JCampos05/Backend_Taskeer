@@ -21,31 +21,25 @@ const estadisticasRoutes = require('./routes/estadisticas.routes');
 const notificacionesService = require('./services/notificaciones.service');
 const zonasRoutes = require('./routes/zonas.routes');
 
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 const server = http.createServer(app);
 
+// CORS configurado para producción y desarrollo
 app.use(cors({
     origin: function(origin, callback) {
-        // Lista de orígenes permitidos
         const allowedOrigins = [
-            /^http:\/\/localhost:\d+$/,  // Cualquier puerto localhost (desarrollo)
-            /^http:\/\/127\.0\.0\.1:\d+$/, // IP local con cualquier puerto
-            // Agrega tus dominios de producción aquí cuando los tengas:
-            // /^https:\/\/(www\.)?tudominio\.com$/,
-            // /^https:\/\/app\.tudominio\.com$/,
-            // 'https://tudominio.com',
-            // 'https://www.tudominio.com'
-        ];
+            /^http:\/\/localhost:\d+$/,
+            /^http:\/\/127\.0\.0\.1:\d+$/,
+            process.env.FRONTEND_URL, // Tu dominio de Vercel
+            /^https:\/\/.*\.vercel\.app$/, // Cualquier preview de Vercel
+        ].filter(Boolean); // Elimina undefined si FRONTEND_URL no está configurado
 
-        // Permitir requests sin origin (Postman, apps móviles, etc.)
         if (!origin) {
             return callback(null, true);
         }
 
-        // Verificar si el origin está permitido
         const isAllowed = allowedOrigins.some(pattern => {
             if (pattern instanceof RegExp) {
                 return pattern.test(origin);
@@ -56,7 +50,7 @@ app.use(cors({
         if (isAllowed) {
             callback(null, true);
         } else {
-            console.warn(`❌ CORS bloqueado para origen: ${origin}`);
+            console.warn(`⚠️ CORS bloqueado para origen: ${origin}`);
             callback(new Error('No permitido por CORS'));
         }
     },
@@ -67,19 +61,17 @@ app.use(cors({
     maxAge: 86400
 }));
 
-// Middleware específico para SSE ANTES de otras rutas
+// Middleware específico para SSE
 app.use('/api/sse', (req, res, next) => {
     const origin = req.headers.origin;
     
-    // Lista de orígenes permitidos para SSE
     const allowedOrigins = [
         /^http:\/\/localhost:\d+$/,
         /^http:\/\/127\.0\.0\.1:\d+$/,
-        // Agrega dominios de producción:
-        // /^https:\/\/(www\.)?tudominio\.com$/,
-    ];
+        process.env.FRONTEND_URL,
+        /^https:\/\/.*\.vercel\.app$/,
+    ].filter(Boolean);
 
-    // Verificar si el origin está permitido
     if (origin) {
         const isAllowed = allowedOrigins.some(pattern => {
             if (pattern instanceof RegExp) {
@@ -106,14 +98,20 @@ app.use('/api/sse', (req, res, next) => {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '../public')));
-app.use(express.static('../Frontend2'));
 
-// Middleware para logging
-app.use((req, res, next) => {
-    console.log(`${req.method} ${req.path} - ${new Date().toLocaleString()}`);
-    next();
-});
+// Solo servir archivos estáticos en desarrollo
+if (process.env.NODE_ENV !== 'production') {
+    app.use(express.static(path.join(__dirname, '../public')));
+    app.use(express.static('../Frontend2'));
+}
+
+// Middleware para logging (solo en desarrollo)
+if (process.env.NODE_ENV !== 'production') {
+    app.use((req, res, next) => {
+        console.log(`${req.method} ${req.path} - ${new Date().toLocaleString()}`);
+        next();
+    });
+}
 
 // Health check
 app.get('/healthz', async (req, res) => {
@@ -129,7 +127,11 @@ app.get('/healthz', async (req, res) => {
         })();
         
         await Promise.race([checkPromise, timeoutPromise]);
-        res.status(200).json({ status: 'healthy' });
+        res.status(200).json({ 
+            status: 'healthy',
+            timestamp: new Date().toISOString(),
+            environment: process.env.NODE_ENV || 'development'
+        });
     } catch (error) {
         console.error('Health check failed:', error);
         res.status(503).json({ 
@@ -139,7 +141,7 @@ app.get('/healthz', async (req, res) => {
     }
 });
 
-// ✅ IMPORTANTE: SSE debe ir ANTES de otras rutas para evitar conflictos
+// SSE debe ir ANTES de otras rutas
 app.use('/api/sse', sseRoutes);
 
 // Rutas de API
@@ -154,9 +156,21 @@ app.use('/api/chat', verificarToken, chatRoutes);
 app.use('/api/estadisticas', verificarToken, estadisticasRoutes);
 app.use('/api/zonas', zonasRoutes);
 
-// Ruta raíz
+// Ruta raíz - Solo en desarrollo sirve el frontend
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../Frontend2', 'login.html'));
+    if (process.env.NODE_ENV === 'production') {
+        res.json({
+            success: true,
+            message: 'Taskeer API',
+            version: '1.0.0',
+            endpoints: {
+                health: '/healthz',
+                api: '/api'
+            }
+        });
+    } else {
+        res.sendFile(path.join(__dirname, '../Frontend2', 'login.html'));
+    }
 });
 
 // 404
@@ -179,13 +193,14 @@ app.use((err, req, res, next) => {
 
 initializeSocket(server);
 
-server.listen(PORT, () => {
-    console.log(`🚀 Servidor HTTP corriendo en http://localhost:${PORT}`);
-    console.log(`📋 API de Tareas: http://localhost:${PORT}/api/tareas`);
-    console.log(`🔔 API de Notificaciones: http://localhost:${PORT}/api/compartir/notificaciones`);
-    console.log(`💬 WebSocket Chat: ws://localhost:${PORT}/chat`);
-    console.log(`📡 Socket.IO Namespace: http://localhost:${PORT}/chat`);
-    console.log(`📡 SSE Endpoint: http://localhost:${PORT}/api/sse/notificaciones`);
+server.listen(PORT, '0.0.0.0', () => {
+    const env = process.env.NODE_ENV || 'development';
+    console.log(`🚀 Servidor corriendo en modo: ${env}`);
+    console.log(`🌐 Puerto: ${PORT}`);
+    console.log(`📋 API de Tareas: /api/tareas`);
+    console.log(`🔔 API de Notificaciones: /api/compartir/notificaciones`);
+    console.log(`💬 WebSocket Chat: /chat`);
+    console.log(`📡 SSE Endpoint: /api/sse/notificaciones`);
     
     console.log('\n🔔 Iniciando servicio de notificaciones automáticas...');
     notificacionesService.iniciar();
@@ -196,25 +211,25 @@ const sseManager = require('./utils/sseManager');
 
 server.on('error', (error) => {
     if (error.code === 'EADDRINUSE') {
-        console.error(`\n❌ ERROR: El puerto ${PORT} ya está en uso`);
+        console.error(`\nERROR: El puerto ${PORT} ya está en uso`);
         console.error('   Intenta cerrar otras aplicaciones o usar otro puerto\n');
         process.exit(1);
     } else {
-        console.error('\n❌ Error del servidor:', error.message, '\n');
+        console.error('\nError del servidor:', error.message, '\n');
         process.exit(1);
     }
 });
 
 const gracefulShutdown = () => {
-    console.log('\n👋 Cerrando servidor...');
+    console.log('\nCerrando servidor...');
 
     notificacionesService.detener();
     sseManager.cleanup();
     
     server.close(() => {
-        console.log('✅ Servidor HTTP cerrado');
+        console.log('Servidor HTTP cerrado');
         pool.end(() => {
-            console.log('✅ Pool MySQL cerrado');
+            console.log('Pool MySQL cerrado');
             process.exit(0);
         });
     });
