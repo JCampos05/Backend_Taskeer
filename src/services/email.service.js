@@ -1,20 +1,9 @@
-const nodemailer = require('nodemailer');
+const resend = require('../config/resend.config');
 const fs = require('fs').promises;
 const path = require('path');
 const { obtenerFrontendUrl } = require('../utils/urlHelper');
 
 class EmailService {
-  constructor() {
-    this.transporter = nodemailer.createTransport({
-      service: 'gmail',
-      port: 465,
-      secure: true,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD
-      }
-    });
-  }
 
   async cargarTemplate(nombreTemplate) {
     try {
@@ -39,8 +28,27 @@ class EmailService {
     return resultado;
   }
 
+  // Método helper para modo de prueba
+  obtenerEmailDestino(email) {
+    // Si estamos en modo desarrollo/prueba y el email no es el de prueba autorizado
+    // redirigir al email de prueba pero loggearlo
+    const emailPrueba = process.env.RESEND_TEST_EMAIL; 
+    const usarModoPrueba = process.env.RESEND_TEST_MODE === 'true';
+
+    if (usarModoPrueba && emailPrueba) {
+      if (email !== emailPrueba) {
+        console.log(`⚠️ MODO PRUEBA: Email original: ${email}, enviando a: ${emailPrueba}`);
+        return emailPrueba;
+      }
+    }
+
+    return email;
+  }
+
   async enviarCodigoVerificacion(email, nombre, codigo) {
     try {
+      const emailDestino = this.obtenerEmailDestino(email);
+      
       let html = await this.cargarTemplate('verificacion.html');
 
       html = this.reemplazarPlaceholders(html, {
@@ -50,22 +58,26 @@ class EmailService {
         FRONTEND_URL: obtenerFrontendUrl()
       });
 
-      const mailOptions = {
+      const { data, error } = await resend.emails.send({
         from: `${process.env.EMAIL_FROM_NAME} <${process.env.EMAIL_FROM_ADDRESS}>`,
-        to: email,
+        to: [emailDestino],
         subject: '🔐 Verifica tu cuenta en Taskeer',
         html: html,
         text: `Hola ${nombre},\n\nTu código de verificación es: ${codigo}\n\nEste código expira en 15 minutos.\n\n¡Gracias por unirte a Taskeer!`
-      };
+      });
 
-      const info = await this.transporter.sendMail(mailOptions);
+      if (error) {
+        console.error('❌ Error de Resend:', error);
+        throw error;
+      }
 
-      console.log('✅ Email de verificación enviado:', info.messageId);
-      console.log('📧 Destinatario:', email);
+      console.log('✅ Email de verificación enviado:', data.id);
+      console.log('📧 Destinatario original:', email);
+      console.log('📧 Destinatario real:', emailDestino);
 
       return {
         success: true,
-        messageId: info.messageId,
+        messageId: data.id,
         destinatario: email
       };
     } catch (error) {
@@ -76,6 +88,8 @@ class EmailService {
 
   async enviarBienvenida(email, nombre) {
     try {
+      const emailDestino = this.obtenerEmailDestino(email);
+      
       let html = await this.cargarTemplate('bienvenida.html');
 
       html = this.reemplazarPlaceholders(html, {
@@ -85,19 +99,22 @@ class EmailService {
         FRONTEND_URL: obtenerFrontendUrl()
       });
 
-      const mailOptions = {
+      const { data, error } = await resend.emails.send({
         from: `${process.env.EMAIL_FROM_NAME} <${process.env.EMAIL_FROM_ADDRESS}>`,
-        to: email,
+        to: [emailDestino],
         subject: '🎉 ¡Bienvenido a Taskeer!',
         html: html,
         text: `¡Hola ${nombre}!\n\nTu cuenta ha sido verificada exitosamente.\n\n¡Bienvenido a Taskeer!`
-      };
+      });
 
-      const info = await this.transporter.sendMail(mailOptions);
+      if (error) {
+        console.error('❌ Error de Resend:', error);
+        return { success: false, error: error.message };
+      }
 
-      console.log('✅ Email de bienvenida enviado:', info.messageId);
+      console.log('✅ Email de bienvenida enviado:', data.id);
 
-      return { success: true, messageId: info.messageId };
+      return { success: true, messageId: data.id };
     } catch (error) {
       console.error('❌ Error al enviar email de bienvenida:', error);
       return { success: false, error: error.message };
@@ -106,17 +123,22 @@ class EmailService {
 
   async testConexion() {
     try {
-      await this.transporter.verify();
-      console.log('✅ Conexión con SMTP exitosa');
-      return { success: true, message: 'SMTP conectado correctamente' };
+      if (!process.env.RESEND_API_KEY) {
+        throw new Error('RESEND_API_KEY no configurada');
+      }
+      
+      console.log('✅ Conexión con Resend exitosa');
+      return { success: true, message: 'Resend API conectada' };
     } catch (error) {
-      console.error('❌ Error al conectar con SMTP:', error);
+      console.error('❌ Error al conectar con Resend:', error);
       return { success: false, error: error.message };
     }
   }
 
   async enviarCodigoCambioPassword(email, nombre, codigo) {
     try {
+      const emailDestino = this.obtenerEmailDestino(email);
+      
       let html = await this.cargarTemplate('cambio-password.html');
 
       html = this.reemplazarPlaceholders(html, {
@@ -126,22 +148,25 @@ class EmailService {
         FRONTEND_URL: obtenerFrontendUrl()
       });
 
-      const mailOptions = {
+      const { data, error } = await resend.emails.send({
         from: `${process.env.EMAIL_FROM_NAME} <${process.env.EMAIL_FROM_ADDRESS}>`,
-        to: email,
+        to: [emailDestino],
         subject: '🔑 Código para Cambio de Contraseña - Taskeer',
         html: html,
         text: `Hola ${nombre},\n\nTu código para cambiar la contraseña es: ${codigo}\n\nEste código expira en 15 minutos.\n\nSi no solicitaste este cambio, ignora este mensaje.`
-      };
+      });
 
-      const info = await this.transporter.sendMail(mailOptions);
+      if (error) {
+        console.error('❌ Error de Resend:', error);
+        throw error;
+      }
 
-      console.log('✅ Email de cambio de contraseña enviado:', info.messageId);
-      console.log('📧 Destinatario:', email);
+      console.log('✅ Email de cambio de contraseña enviado:', data.id);
+      console.log('📧 Destinatario:', emailDestino);
 
       return {
         success: true,
-        messageId: info.messageId,
+        messageId: data.id,
         destinatario: email
       };
     } catch (error) {
@@ -152,6 +177,8 @@ class EmailService {
 
   async enviarCodigoRecuperacionPassword(email, nombre, codigo) {
     try {
+      const emailDestino = this.obtenerEmailDestino(email);
+      
       let html = await this.cargarTemplate('recuperacion-password.html');
 
       html = this.reemplazarPlaceholders(html, {
@@ -161,22 +188,25 @@ class EmailService {
         FRONTEND_URL: obtenerFrontendUrl()
       });
 
-      const mailOptions = {
+      const { data, error } = await resend.emails.send({
         from: `${process.env.EMAIL_FROM_NAME} <${process.env.EMAIL_FROM_ADDRESS}>`,
-        to: email,
+        to: [emailDestino],
         subject: '🔓 Código de Recuperación de Contraseña - Taskeer',
         html: html,
         text: `Hola ${nombre},\n\nTu código de recuperación de contraseña es: ${codigo}\n\nEste código expira en 15 minutos.\n\nSi no solicitaste este cambio, ignora este mensaje.`
-      };
+      });
 
-      const info = await this.transporter.sendMail(mailOptions);
+      if (error) {
+        console.error('❌ Error de Resend:', error);
+        throw error;
+      }
 
-      console.log('✅ Email de recuperación enviado:', info.messageId);
-      console.log('📧 Destinatario:', email);
+      console.log('✅ Email de recuperación enviado:', data.id);
+      console.log('📧 Destinatario:', emailDestino);
 
       return {
         success: true,
-        messageId: info.messageId,
+        messageId: data.id,
         destinatario: email
       };
     } catch (error) {
