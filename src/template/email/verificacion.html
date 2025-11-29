@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifica tu cuenta - Taskeer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            background-color: #f5f3f5;
+            padding: 0;
+            margin: 0;
+        }
+
+        .email-wrapper {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(27, 38, 79, 0.12);
+        }
+
+        .email-header {
+            background: linear-gradient(135deg, #1B264F 0%, #274690 50%, #576CA8 100%);
+            padding: 40px 32px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .email-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(87, 108, 168, 0.3) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .logo-container {
+            position: relative;
+            z-index: 1;
+            margin-bottom: 16px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+        }
+
+        .brand-name {
+            font-size: 36px;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .email-subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            font-weight: 500;
+            margin-top: 8px;
+        }
+
+        .email-content {
+            padding: 40px 32px;
+        }
+
+        .greeting {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1B264F;
+            margin-bottom: 16px;
+        }
+
+        .message {
+            color: #302B27;
+            font-size: 16px;
+            line-height: 1.7;
+            margin-bottom: 24px;
+        }
+
+        .code-container {
+            background: linear-gradient(135deg, #f5f3f5 0%, #ffffff 100%);
+            border: 3px dashed #576CA8;
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            margin: 32px 0;
+        }
+
+        .code-label {
+            color: #576CA8;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 16px;
+        }
+
+        .code {
+            font-size: 48px;
+            font-weight: 900;
+            color: #274690;
+            letter-spacing: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            user-select: all;
+        }
+
+        .info-box {
+            background-color: #f5f3f5;
+            border-left: 4px solid #576CA8;
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin: 24px 0;
+        }
+
+        .info-box-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin: 12px 0;
+            color: #302B27;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .email-footer {
+            background-color: #f5f3f5;
+            padding: 32px;
+            text-align: center;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .footer-text {
+            color: #576CA8;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .footer-link {
+            color: #274690;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .email-wrapper {
+                margin: 20px;
+            }
+            .code {
+                font-size: 36px;
+                letter-spacing: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-wrapper">
+        <div class="email-header">
+            <div class="logo-container">
+                <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="10" y="10" width="25" height="35" rx="3" fill="white"/>
+                    <circle cx="22.5" cy="52" r="4" fill="white" opacity="0.7"/>
+                    <rect x="12" y="18" width="21" height="3" rx="1.5" fill="#274690"/>
+                    <path d="M 17 30 L 21 34 L 29 26" stroke="#274690" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <rect x="37.5" y="10" width="25" height="35" rx="3" fill="white" opacity="0.8"/>
+                    <circle cx="50" cy="52" r="4" fill="white" opacity="0.5"/>
+                    <rect x="43" y="26" width="15" height="3" rx="1.5" fill="#274690"/>
+                    <rect x="65" y="10" width="25" height="35" rx="3" fill="white" opacity="0.6"/>
+                    <circle cx="77.5" cy="52" r="4" fill="white" opacity="0.3"/>
+                    <circle cx="77.5" cy="28" r="5" fill="#274690"/>
+                </svg>
+            </div>
+            <div class="brand-name">Taskeer</div>
+            <div class="email-subtitle">Verificación de Cuenta</div>
+        </div>
+
+        <div class="email-content">
+            <div class="greeting">¡Hola {{NOMBRE}}! 👋</div>
+            
+            <p class="message">
+                Gracias por registrarte en <strong>Taskeer</strong>. Para completar tu registro y comenzar a organizar tus tareas, necesitamos verificar tu dirección de correo electrónico.
+            </p>
+
+            <div class="code-container">
+                <div class="code-label">🔐 Tu Código de Verificación</div>
+                <div class="code">{{CODIGO}}</div>
+            </div>
+
+            <div class="info-box">
+                <div class="info-box-item">
+                    ⏱️ Este código expira en <strong>15 minutos</strong>
+                </div>
+                <div class="info-box-item">
+                    🔒 Nunca compartas este código con nadie
+                </div>
+                <div class="info-box-item">
+                    ❓ Si no solicitaste este código, puedes ignorar este mensaje
+                </div>
+            </div>
+
+            <p class="message">
+                Una vez verificado tu email, podrás acceder a todas las funcionalidades de Taskeer y comenzar a gestionar tus proyectos de manera eficiente.
+            </p>
+        </div>
+
+        <div class="email-footer">
+            <p class="footer-text">
+                Este es un mensaje automático, por favor no respondas a este correo.<br>
+                © {{ANIO}} Taskeer. Todos los derechos reservados.<br><br>
+                <a href="{{FRONTEND_URL}}" class="footer-link">Visitar Taskeer</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

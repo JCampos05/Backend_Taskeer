@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenido a Taskeer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            background-color: #f5f3f5;
+            padding: 0;
+            margin: 0;
+        }
+
+        .email-wrapper {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(27, 38, 79, 0.12);
+        }
+
+        .email-header {
+            background: linear-gradient(135deg, #1B264F 0%, #274690 50%, #576CA8 100%);
+            padding: 50px 32px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .email-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(87, 108, 168, 0.3) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .logo-container {
+            position: relative;
+            z-index: 1;
+            margin-bottom: 24px;
+        }
+
+        .logo {
+            width: 100px;
+            height: 100px;
+        }
+
+        .brand-name {
+            font-size: 42px;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 1;
+            margin-bottom: 12px;
+        }
+
+        .celebration {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .email-subtitle {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 20px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .email-content {
+            padding: 40px 32px;
+        }
+
+        .greeting {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1B264F;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .message {
+            color: #302B27;
+            font-size: 16px;
+            line-height: 1.8;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .features-container {
+            margin: 32px 0;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 20px;
+            background-color: #f5f3f5;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-item:hover {
+            background-color: #e9ecef;
+            transform: translateX(4px);
+        }
+
+        .feature-icon {
+            font-size: 32px;
+            flex-shrink: 0;
+        }
+
+        .feature-content {
+            flex: 1;
+        }
+
+        .feature-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1B264F;
+            margin-bottom: 8px;
+        }
+
+        .feature-description {
+            font-size: 14px;
+            color: #576CA8;
+            line-height: 1.6;
+        }
+
+        .cta-container {
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 18px 48px;
+            background: linear-gradient(135deg, #1B264F 0%, #274690 100%);
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 18px;
+            box-shadow: 0 4px 16px rgba(39, 70, 144, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .tips-box {
+            background: linear-gradient(135deg, #f5f3f5 0%, #ffffff 100%);
+            border: 2px solid #576CA8;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 32px 0;
+        }
+
+        .tips-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #274690;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tip-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin: 12px 0;
+            color: #302B27;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .email-footer {
+            background-color: #f5f3f5;
+            padding: 32px;
+            text-align: center;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .footer-text {
+            color: #576CA8;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .footer-link {
+            color: #274690;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .email-wrapper {
+                margin: 20px;
+            }
+            .brand-name {
+                font-size: 32px;
+            }
+            .greeting {
+                font-size: 26px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-wrapper">
+        <div class="email-header">
+            <div class="celebration">🎉</div>
+            <div class="logo-container">
+                <svg class="logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="10" y="10" width="25" height="35" rx="3" fill="white"/>
+                    <circle cx="22.5" cy="52" r="4" fill="white" opacity="0.7"/>
+                    <rect x="12" y="18" width="21" height="3" rx="1.5" fill="#274690"/>
+                    <path d="M 17 30 L 21 34 L 29 26" stroke="#274690" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    <rect x="37.5" y="10" width="25" height="35" rx="3" fill="white" opacity="0.8"/>
+                    <circle cx="50" cy="52" r="4" fill="white" opacity="0.5"/>
+                    <rect x="43" y="26" width="15" height="3" rx="1.5" fill="#274690"/>
+                    <rect x="65" y="10" width="25" height="35" rx="3" fill="white" opacity="0.6"/>
+                    <circle cx="77.5" cy="52" r="4" fill="white" opacity="0.3"/>
+                    <circle cx="77.5" cy="28" r="5" fill="#274690"/>
+                </svg>
+            </div>
+            <div class="brand-name">Taskeer</div>
+            <div class="email-subtitle">¡Bienvenido a bordo!</div>
+        </div>
+
+        <div class="email-content">
+            <div class="greeting">¡Hola {{NOMBRE}}! 🚀</div>
+            
+            <p class="message">
+                ¡Tu cuenta ha sido verificada exitosamente! Estamos emocionados de tenerte como parte de la comunidad de <strong>Taskeer</strong>.
+            </p>
+
+            <p class="message">
+                Ahora puedes comenzar a organizar tus tareas, proyectos y objetivos de manera eficiente y productiva.
+            </p>
+
+            <div class="features-container">
+                <div class="feature-item">
+                    <div class="feature-icon">📋</div>
+                    <div class="feature-content">
+                        <div class="feature-title">Gestiona tus Tareas</div>
+                        <div class="feature-description">
+                            Crea, organiza y completa tareas con facilidad. Establece prioridades y fechas límite.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="feature-item">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-content">
+                        <div class="feature-title">Tableros Kanban</div>
+                        <div class="feature-description">
+                            Visualiza tu progreso con tableros personalizables estilo Kanban.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="feature-item">
+                    <div class="feature-icon">👥</div>
+                    <div class="feature-content">
+                        <div class="feature-title">Colaboración en Equipo</div>
+                        <div class="feature-description">
+                            Comparte listas y colabora en tiempo real con tu equipo.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="feature-item">
+                    <div class="feature-icon">📈</div>
+                    <div class="feature-content">
+                        <div class="feature-title">Estadísticas y Reportes</div>
+                        <div class="feature-description">
+                            Analiza tu productividad con gráficos y reportes detallados.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tips-box">
+                <div class="tips-title">
+                    💡 Consejos para Empezar
+                </div>
+                <div class="tip-item">
+                    ✨ <strong>Crea tu primera lista</strong> para organizar tus tareas por proyecto o categoría
+                </div>
+                <div class="tip-item">
+                    🎯 <strong>Establece prioridades</strong> para enfocarte en lo más importante
+                </div>
+                <div class="tip-item">
+                    📅 <strong>Usa el calendario</strong> para visualizar tus tareas por fecha
+                </div>
+                <div class="tip-item">
+                    🔔 <strong>Activa las notificaciones</strong> para no perder ninguna fecha límite
+                </div>
+            </div>
+
+            <div class="cta-container">
+                <a href="{{FRONTEND_URL}}/app/mi-dia" class="cta-button">
+                    🚀 Comenzar Ahora
+                </a>
+            </div>
+
+            <p class="message" style="margin-top: 32px;">
+                Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos. ¡Estamos aquí para ayudarte!
+            </p>
+        </div>
+
+        <div class="email-footer">
+            <p class="footer-text">
+                © {{ANIO}} Taskeer. Todos los derechos reservados.<br><br>
+                <a href="{{FRONTEND_URL}}" class="footer-link">🌐 Visitar Taskeer</a> · 
+                <a href="{{FRONTEND_URL}}/ayuda" class="footer-link">❓ Centro de Ayuda</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
