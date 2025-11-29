@@ -7,7 +7,6 @@ class EmailService {
 
   async cargarTemplate(nombreTemplate) {
     try {
-      // ✅ Corregido: 'templates' (con S)
       const templatePath = path.join(__dirname, '../template/email', nombreTemplate);
       console.log('🔍 Buscando template en:', templatePath); // Debug
       const html = await fs.readFile(templatePath, 'utf-8');
